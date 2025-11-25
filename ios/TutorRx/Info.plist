@@ -35,6 +35,12 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string/>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to upload images for AI chat assistance.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library to select images for AI chat assistance.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need access to your microphone to record audio messages for AI chat assistance.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

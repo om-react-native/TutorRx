@@ -3862,6 +3862,8 @@ PODS:
     - React-utils (= 0.82.1)
     - SocketRocket
   - RecaptchaInterop (101.0.0)
+  - RNAudio (4.3.0):
+    - React
   - RNCAsyncStorage (1.24.0):
     - boost
     - DoubleConversion
@@ -4014,6 +4016,34 @@ PODS:
     - React-NativeModulesApple
     - React-RCTFabric
     - React-RCTImage
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
+  - RNSound (0.13.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
     - React-renderercss
     - React-rendererdebug
     - React-utils
@@ -4257,6 +4287,7 @@ DEPENDENCIES:
   - ReactAppDependencyProvider (from `build/generated/ios`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - RNAudio (from `../node_modules/react-native-audio`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
@@ -4265,6 +4296,7 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSound (from `../node_modules/react-native-sound`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - SocketRocket (~> 0.7.1)
   - "stripe-react-native (from `../node_modules/@stripe/stripe-react-native`)"
@@ -4461,6 +4493,8 @@ EXTERNAL SOURCES:
     :path: build/generated/ios
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  RNAudio:
+    :path: "../node_modules/react-native-audio"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNFBApp:
@@ -4477,6 +4511,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-google-signin/google-signin"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSound:
+    :path: "../node_modules/react-native-sound"
   RNSVG:
     :path: "../node_modules/react-native-svg"
   stripe-react-native:
@@ -4586,6 +4622,7 @@ SPEC CHECKSUMS:
   ReactCodegen: c0e5f7e3efd6ea0918e2032a7ebfe61c3a780b6a
   ReactCommon: 6087cb6198592a8dc52a37c0f3761644fead5c88
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
+  RNAudio: cae2991f2dccb75163f260b60da8051717b959fa
   RNCAsyncStorage: 7c9d6b389e2977ffe92fe8cafbea77974649c72b
   RNFBApp: 89523a4912396a34fc60727c39835c0473dccddd
   RNFBAuth: 8b2aff712aaafb0479092af3214963166d29678d
@@ -4594,6 +4631,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: bf1f603bd818932dac6a45c223f23c3a5da3423e
   RNGoogleSignin: f4acd1e528303c8283c2411f3b148a6968cef339
   RNScreens: de996b48c82245c0b68c677da3334c2061e2a951
+  RNSound: 9a85701a35e3132484515e73b694610997c7fdfb
   RNSVG: 617277c7050d6e9402754a0c8e1e8f8fde01eee5
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Stripe: 4728e3e0dd8df134e4a420ab504e929a93a815f0

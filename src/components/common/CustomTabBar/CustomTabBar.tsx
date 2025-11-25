@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Platform,
   TextStyle,
+  ViewStyle,
 } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -35,12 +36,38 @@ const labelMap = {
   Profile: 'Profile',
 };
 
+const useTabBarStyles = () => {
+  const { colors, isDark } = useTheme();
+
+  return useMemo(
+    () => ({
+      tabBar: {
+        backgroundColor: isDark
+          ? 'rgba(26, 31, 46, 0.3)'
+          : 'rgba(255, 255, 255, 0.15)',
+        borderColor: isDark
+          ? 'rgba(255, 255, 255, 0.15)'
+          : 'rgba(255, 255, 255, 0.5)',
+      } as ViewStyle,
+      tabLabel: (isFocused: boolean): TextStyle => ({
+        color: isFocused ? colors.primary : colors.textSecondary,
+        fontFamily: Typography.fontFamily.regular,
+      }),
+      iconColor: (isFocused: boolean) => ({
+        color: isFocused ? colors.primary : colors.textSecondary,
+      }),
+    }),
+    [colors, isDark],
+  );
+};
+
 export const CustomTabBar: React.FC<BottomTabBarProps> = ({
   state,
   descriptors,
   navigation,
 }) => {
   const { colors, isDark } = useTheme();
+  const dynamicStyles = useTabBarStyles();
 
   return (
     <View style={styles.container}>
@@ -48,11 +75,9 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({
         style={styles.blurView}
         blurType={isDark ? 'dark' : 'light'}
         blurAmount={20}
-        reducedTransparencyFallbackColor={colors.glassBackground}
+        reducedTransparencyFallbackColor="transparent"
       >
-        <View
-          style={[styles.tabBar, { backgroundColor: colors.glassBackground }]}
-        >
+        <View style={[styles.tabBar, dynamicStyles.tabBar]}>
           {state.routes.map((route, index) => {
             const { options } = descriptors[route.key];
             const label =
@@ -87,7 +112,6 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({
                 accessibilityRole="button"
                 accessibilityState={isFocused ? { selected: true } : {}}
                 accessibilityLabel={options.tabBarAccessibilityLabel}
-                testID={options.tabBarTestID}
                 onPress={onPress}
                 onLongPress={onLongPress}
                 style={styles.tabItem}
@@ -96,19 +120,13 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({
                 {IconComponent && (
                   <IconComponent
                     size={24}
-                    color={isFocused ? colors.primary : colors.textSecondary}
+                    color={dynamicStyles.iconColor(isFocused).color}
                     fill={shouldFill ? colors.primary : 'transparent'}
                     strokeWidth={isFocused ? 2.5 : 2}
                   />
                 )}
                 <Text
-                  style={[
-                    styles.tabLabel,
-                    {
-                      color: isFocused ? colors.primary : colors.textSecondary,
-                      fontFamily: Typography.fontFamily.regular,
-                    },
-                  ]}
+                  style={[styles.tabLabel, dynamicStyles.tabLabel(isFocused)]}
                 >
                   {label}
                 </Text>
@@ -155,12 +173,10 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     alignItems: 'center',
     justifyContent: 'space-around',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   tabItem: {
     flex: 1,
