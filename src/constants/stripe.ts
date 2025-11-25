@@ -1,3 +1,3 @@
 // Stripe configuration
-export const STRIPE_PUBLISHABLE_KEY = ''; // Add your Stripe publishable key here
+export const STRIPE_PUBLISHABLE_KEY = 'pk_test_51SXJCLRhnmCjoZSR3ok7dkwImQZ5YkMLIP2MMYZMsXeHrxjRLsHT4nUNklHf7CsATvehC1RG4Sn1GSq1PvJv3U7O00qKdSnhYc';
 

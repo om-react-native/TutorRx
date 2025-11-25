@@ -20,6 +20,7 @@ module.exports = {
           '@theme': './src/theme',
           '@assets': './src/assets',
           '@constants': './src/constants',
+          '@config': './src/config',
         },
       },
     ],

@@ -1,5 +1,5 @@
 import { Linking, Alert } from 'react-native';
-import { STRIPE_CONFIG, FIREBASE_FUNCTIONS_URL } from '@config/stripe.config';
+import { STRIPE_CONFIG, FIREBASE_FUNCTIONS_URL } from '@config/stripe.config.ts';
 
 class StripeService {
   /**
@@ -34,8 +34,18 @@ class StripeService {
    */
   private async createCheckoutSession(userId: string, userEmail: string): Promise<string> {
     try {
-      // TODO: Uncomment after Firebase Functions are deployed
-      /*
+      // Ensure Functions URL has been configured
+      if (
+        !FIREBASE_FUNCTIONS_URL.createCheckoutSession ||
+        FIREBASE_FUNCTIONS_URL.createCheckoutSession.includes('your-project')
+      ) {
+        Alert.alert(
+          'Setup Required',
+          'Firebase Functions URLs are not configured. Please update FIREBASE_FUNCTIONS_URL in stripe.config.ts after deploying your functions (see STRIPE_SETUP.md).',
+        );
+        throw new Error('Firebase Functions URL not configured');
+      }
+
       const response = await fetch(FIREBASE_FUNCTIONS_URL.createCheckoutSession, {
         method: 'POST',
         headers: {
@@ -50,20 +60,25 @@ class StripeService {
       });
 
       if (!response.ok) {
+        // Log extra info to help debug failures
+        try {
+          const errorText = await response.text();
+          console.warn(
+            'Stripe createCheckoutSession error response:',
+            response.status,
+            errorText,
+          );
+        } catch {
+          // ignore
+        }
         throw new Error('Failed to create checkout session');
       }
 
       const data = await response.json();
+      if (!data?.url) {
+        throw new Error('Invalid response from payment server');
+      }
       return data.url;
-      */
-
-      // Temporary fallback: Return a placeholder URL
-      // This should be replaced with actual Firebase Function URL
-      Alert.alert(
-        'Setup Required',
-        'Firebase Functions need to be deployed first. Please follow the setup instructions in the README.',
-      );
-      throw new Error('Firebase Functions not yet deployed');
     } catch (error: any) {
       throw error;
     }

@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppNavigator } from '@navigation';
 import { initializeStripe } from '@services/stripe';
+import { useAuthStore } from '@store/authStore';
 
 // Initialize Stripe
 initializeStripe();
@@ -16,6 +17,17 @@ initializeStripe();
 function App() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+
+  useEffect(() => {
+    // Initialize Firebase Auth state listener
+    // This will automatically restore user session on app restart
+    const unsubscribe = initializeAuth();
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [initializeAuth]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

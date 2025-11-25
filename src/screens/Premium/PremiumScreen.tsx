@@ -5,14 +5,14 @@ import { Crown, CheckCircle, X } from 'lucide-react-native';
 import { GradientBackground, Loading } from '@components/common';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@store';
-import { stripeService } from '@services/stripe';
+import { subscriptionService } from '@services/stripe';
 import { styles, useStyles } from './PremiumScreen.styles';
 
 export const PremiumScreen: React.FC = () => {
   const navigation = useNavigation();
   const { colors, isDark } = useTheme();
   const dynamicStyles = useStyles();
-  const { user } = useAuthStore();
+  const { user, setUser, updateSubscriptionStatus } = useAuthStore();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const features = [
@@ -36,26 +36,42 @@ export const PremiumScreen: React.FC = () => {
   const handleSubscribe = async () => {
     try {
       setIsProcessing(true);
-
       if (!user?.uid || !user?.email) {
         Alert.alert('Error', 'Please log in to subscribe');
         return;
       }
 
-      // Initiate Stripe Checkout
-      await stripeService.initiateCheckout(user.uid, user.email);
+      // 1) Run the in-app Stripe PaymentSheet flow
+      await subscriptionService.purchaseSubscription(user.uid);
 
-      // Note: Payment confirmation will be handled by Stripe webhook
-      // and the subscription status will be updated in Firestore
+      // 2) Immediately mark user as premium in local auth store
+      // so all UIs (Premium, Profile, Home) update right away.
+      if (user) {
+        setUser({
+          ...user,
+          subscriptionStatus: 'premium',
+        });
+      }
+
+      // 3) Fire-and-forget subscription status update (persist to Firestore)
+      updateSubscriptionStatus('premium').catch(error => {
+        console.warn('Failed to persist premium status:', error);
+        Alert.alert(
+          'Warning',
+          'Your payment succeeded, but we could not save your premium status. Please try again or contact support.',
+        );
+      });
+
       Alert.alert(
-        'Setup Required',
-        'Firebase Functions need to be deployed to complete the payment integration. ' +
-          'Please follow the setup instructions in the project documentation.',
-        [{ text: 'OK' }],
+        'Success',
+        'Payment successful! You now have access to TutorRx Premium for one month.',
       );
     } catch (error: any) {
+      // Any error from PaymentSheet or setup should stop the loader
       Alert.alert('Error', error.message || 'Failed to process subscription');
     } finally {
+      // In case we threw before or during the payment flow, make sure
+      // we never leave the screen in a loading state.
       setIsProcessing(false);
     }
   };

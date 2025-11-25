@@ -1,36 +1,116 @@
 import firestore from '@react-native-firebase/firestore';
 
+/**
+ * Retry utility for transient Firestore errors
+ * Implements exponential backoff for retries
+ */
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> => {
+  let lastError: any;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Check if it's a transient error that should be retried
+      const isTransientError = 
+        error.code === 'unavailable' ||
+        error.code === 'deadline-exceeded' ||
+        error.code === 'internal' ||
+        error.message?.includes('unavailable') ||
+        error.message?.includes('transient');
+      
+      // Don't retry if it's not a transient error or we've exhausted retries
+      if (!isTransientError || attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Exponential backoff: wait longer between each retry
+      const delay = initialDelay * Math.pow(2, attempt);
+      console.log(`Firestore transient error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+};
+
 class FirestoreService {
   private db = firestore();
 
   // User operations
   async createUser(uid: string, userData: any): Promise<void> {
     try {
-      await this.db.collection('users').doc(uid).set({
-        ...userData,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        subscriptionStatus: 'free',
-        chatHistory: [],
-        flashcardProgress: [],
-        studyPlanHistory: [],
+      // Use retry logic for transient errors
+      await retryWithBackoff(async () => {
+        // Check if user already exists
+        const userDoc = await this.db.collection('users').doc(uid).get();
+        if (userDoc.exists()) {
+          console.log('User document already exists, skipping creation');
+          return;
+        }
+        
+        // Create user document with merge to avoid overwriting if it somehow exists
+        await this.db.collection('users').doc(uid).set({
+          ...userData,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          subscriptionStatus: userData.subscriptionStatus || 'free',
+          chatHistory: [],
+          flashcardProgress: [],
+          studyPlanHistory: [],
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        }, { merge: false }); // Use merge: false to ensure we don't overwrite existing data
       });
     } catch (error: any) {
+      // If error is because document already exists, that's okay
+      if (error.code === 'already-exists' || error.message?.includes('already exists')) {
+        console.log('User document already exists');
+        return;
+      }
+      
+      // For unavailable errors, log but don't throw - app can continue without Firestore
+      if (error.code === 'unavailable' || error.message?.includes('unavailable')) {
+        console.warn('Firestore unavailable - user document will be created when service is available');
+        throw new Error('Firestore service is currently unavailable. Please try again later.');
+      }
+      
       throw new Error(error.message || 'Failed to create user');
     }
   }
 
   async getUser(uid: string): Promise<any> {
     try {
-      const doc = await this.db.collection('users').doc(uid).get();
-      return doc.exists ? { ...doc.data(), id: doc.id } : null;
+      // Use a faster retry policy here so auth initialization is snappy
+      const doc = await retryWithBackoff(
+        async () => {
+          return await this.db.collection('users').doc(uid).get();
+        },
+        1,   // maxRetries: at most one retry
+        300, // initialDelay: shorter delay before retry
+      );
+      return doc.exists() ? { ...doc.data(), id: doc.id } : null;
     } catch (error: any) {
+      // For unavailable errors, return null instead of throwing
+      // This allows the app to continue with Firebase Auth data
+      if (error.code === 'unavailable' || error.message?.includes('unavailable')) {
+        console.warn('Firestore unavailable - using Firebase Auth data only');
+        return null;
+      }
       throw new Error(error.message || 'Failed to get user');
     }
   }
 
   async updateUser(uid: string, data: any): Promise<void> {
     try {
-      await this.db.collection('users').doc(uid).update(data);
+      await this.db.collection('users').doc(uid).update({
+        ...data,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
     } catch (error: any) {
       throw new Error(error.message || 'Failed to update user');
     }
@@ -38,9 +118,19 @@ class FirestoreService {
 
   async updateSubscriptionStatus(uid: string, status: 'free' | 'premium'): Promise<void> {
     try {
+      // For a simple “one month” premium, we store a client-computed expiry.
+      // This can later be enforced or extended by backend logic if needed.
+      let subscriptionExpiresAt: string | null = null;
+      if (status === 'premium') {
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
+        subscriptionExpiresAt = expiresAt.toISOString();
+      }
+
       await this.db.collection('users').doc(uid).update({
         subscriptionStatus: status,
         subscriptionUpdatedAt: firestore.FieldValue.serverTimestamp(),
+        subscriptionExpiresAt,
       });
     } catch (error: any) {
       throw new Error(error.message || 'Failed to update subscription status');
@@ -118,7 +208,7 @@ class FirestoreService {
       }
 
       const snapshot = await query.get();
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     } catch (error: any) {
       throw new Error(error.message || 'Failed to get questions');
     }

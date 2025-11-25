@@ -12,7 +12,8 @@ export const STRIPE_CONFIG = {
 
 // Firebase Functions URL (update after deployment)
 export const FIREBASE_FUNCTIONS_URL = {
-  createCheckoutSession: 'https://us-central1-your-project.cloudfunctions.net/createCheckoutSession',
-  verifyPremiumStatus: 'https://us-central1-your-project.cloudfunctions.net/verifyPremiumStatus',
+  createCheckoutSession: 'https://us-central1-tutorrx-36144.cloudfunctions.net/createCheckoutSession',
+  verifyPremiumStatus: 'https://us-central1-tutorrx-36144.cloudfunctions.net/verifyPremiumStatus',
+  createPremiumPaymentIntent: 'https://us-central1-tutorrx-36144.cloudfunctions.net/createPremiumPaymentIntent',
 };
 

@@ -17,6 +17,7 @@
       "@theme/*": ["./src/theme/*"],
       "@assets/*": ["./src/assets/*"],
       "@constants/*": ["./src/constants/*"],
+      "@config/*": ["./src/config/*"],
       "@navigation": ["./src/navigation/index.ts"],
       "@store": ["./src/store/index.ts"],
       "@theme": ["./src/theme/index.ts"]
