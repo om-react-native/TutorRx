@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User documents
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can update their own data, but NOT subscription-related fields
+      allow update: if request.auth != null 
+                    && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data)
+                       .affectedKeys()
+                       .hasAny(['subscriptionStatus', 'stripeCustomerId', 'stripeSubscriptionId', 'subscriptionUpdatedAt']);
+      
+      // Allow creation on signup
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Chat messages
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Study plans
+    match /studyPlans/{planId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Questions
+    match /questions/{questionId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Scenarios
+    match /scenarios/{scenarioId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+  }
+}
+
