@@ -1,8 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  Dimensions,
-  PanResponder,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -20,9 +18,6 @@ type Flashcard = {
   answer: string;
   category: string;
 };
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
 const FLASHCARDS: Flashcard[] = [
   {
@@ -72,87 +67,53 @@ export const FlashcardsScreen: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  const pan = useRef(new Animated.ValueXY()).current;
-  const scale = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const currentCard = useMemo(() => FLASHCARDS[currentIndex], [currentIndex]);
 
-  const resetPosition = () => {
-    Animated.spring(pan, {
-      toValue: { x: 0, y: 0 },
-      useNativeDriver: true,
-      friction: 8,
-      tension: 80,
-    }).start();
+  const animateCardChange = (direction: 'left' | 'right') => {
+    const slideValue = direction === 'left' ? -50 : 50;
 
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
+    // Fade out and slide
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: slideValue,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Update the card
+      const newIndex =
+        direction === 'left'
+          ? Math.min(currentIndex + 1, FLASHCARDS.length - 1)
+          : Math.max(currentIndex - 1, 0);
+
+      setCurrentIndex(newIndex);
+      setShowAnswer(false);
+
+      // Reset position and fade in
+      slideAnim.setValue(-slideValue);
+
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
   };
-
-  const forceSwipe = (direction: 'left' | 'right') => {
-    const x = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
-    Animated.timing(pan, {
-      toValue: { x, y: 0 },
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => onSwipeComplete(direction));
-  };
-
-  const onSwipeComplete = (direction: 'left' | 'right') => {
-    const newIndex =
-      direction === 'right'
-        ? Math.max(currentIndex - 1, 0)
-        : Math.min(currentIndex + 1, FLASHCARDS.length - 1);
-
-    pan.setValue({ x: 0, y: 0 });
-    scale.setValue(1);
-    setCurrentIndex(newIndex);
-    setShowAnswer(false);
-  };
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gesture) => {
-        return Math.abs(gesture.dx) > 5;
-      },
-      onPanResponderGrant: () => {
-        const currentX = (pan.x as any)._value || 0;
-        const currentY = (pan.y as any)._value || 0;
-        pan.setOffset({
-          x: currentX,
-          y: currentY,
-        });
-        pan.setValue({ x: 0, y: 0 });
-      },
-      onPanResponderMove: (_, gesture) => {
-        pan.setValue({ x: gesture.dx, y: 0 });
-      },
-      onPanResponderRelease: (_, gesture) => {
-        pan.flattenOffset();
-
-        if (gesture.dx > SWIPE_THRESHOLD) {
-          // Swipe right - go to previous
-          if (currentIndex > 0) {
-            forceSwipe('right');
-          } else {
-            resetPosition();
-          }
-        } else if (gesture.dx < -SWIPE_THRESHOLD) {
-          // Swipe left - go to next
-          if (currentIndex < FLASHCARDS.length - 1) {
-            forceSwipe('left');
-          } else {
-            resetPosition();
-          }
-        } else {
-          resetPosition();
-        }
-      },
-    }),
-  ).current;
 
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < FLASHCARDS.length - 1;
@@ -163,50 +124,19 @@ export const FlashcardsScreen: React.FC = () => {
 
   const handleNext = () => {
     if (canGoNext) {
-      forceSwipe('left');
+      animateCardChange('left');
     }
   };
 
   const handlePrev = () => {
     if (canGoPrev) {
-      forceSwipe('right');
+      animateCardChange('right');
     }
   };
 
-  // 3D Transform animations
-  const rotate = pan.x.interpolate({
-    inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-    outputRange: ['-10deg', '0deg', '10deg'],
-    extrapolate: 'clamp',
-  });
-
-  const rotateY = pan.x.interpolate({
-    inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
-    outputRange: ['30deg', '0deg', '-30deg'],
-    extrapolate: 'clamp',
-  });
-
-  const opacity = pan.x.interpolate({
-    inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
-    outputRange: [0.5, 1, 0.5],
-    extrapolate: 'clamp',
-  });
-
-  const cardScale = pan.x.interpolate({
-    inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
-    outputRange: [0.9, 1, 0.9],
-    extrapolate: 'clamp',
-  });
-
   const animatedCardStyle = {
-    transform: [
-      { translateX: pan.x },
-      { rotate },
-      { perspective: 1000 },
-      { rotateY },
-      { scale: cardScale },
-    ],
-    opacity,
+    transform: [{ translateX: slideAnim }],
+    opacity: fadeAnim,
   };
 
   return (
@@ -248,7 +178,6 @@ export const FlashcardsScreen: React.FC = () => {
                 dynamicStyles.cardShadowWrapper(),
                 animatedCardStyle,
               ]}
-              {...panResponder.panHandlers}
             >
               <LinearGradient
                 style={styles.cardGradient}
@@ -256,7 +185,7 @@ export const FlashcardsScreen: React.FC = () => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <View style={styles.cardContent}>
+                <View key={currentCard.id} style={styles.cardContent}>
                   <View style={styles.questionSection}>
                     <Text
                       style={[
@@ -341,7 +270,7 @@ export const FlashcardsScreen: React.FC = () => {
 
           <View style={styles.paginationContainer}>
             <Text style={[styles.progressText, dynamicStyles.progressText()]}>
-              Card {currentIndex + 1} of {FLASHCARDS.length}
+              {currentIndex + 1}/{FLASHCARDS.length}
             </Text>
 
             <View style={styles.dotsContainer}>
