@@ -8,7 +8,7 @@ export type AuthStackParamList = {
 
 export type MainTabParamList = {
   Home: undefined;
-  Chat: undefined;
+  Chat: { chatId?: string };
   Questions: undefined;
   Flashcards: undefined;
   Profile: undefined;
@@ -52,6 +52,7 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList>;
   Premium: undefined;
   CreateFlashcard: { mode: 'create' | 'edit'; flashcardId?: string };
+  ChatHistory: undefined;
   ChatStack: NavigatorScreenParams<ChatStackParamList>;
   QuestionsStack: NavigatorScreenParams<QuestionsStackParamList>;
   StudyPlanStack: NavigatorScreenParams<StudyPlanStackParamList>;

@@ -45,6 +45,17 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   logoImageContainer: {
     width: 50,
     height: 50,
@@ -66,7 +77,7 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 12,
     opacity: 0.9,
   },
   messagesContainer: {
@@ -113,13 +124,12 @@ export const styles = StyleSheet.create({
   inputContainer: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xs,
-    paddingBottom: Platform.OS === 'ios' ? 100 : 90,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    // marginBottom: Spacing.xs,
   },
   leftActions: {
     flexDirection: 'row',
@@ -149,6 +159,10 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.xs,
+  },
+  footerDisclaimer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xxs,
   },
   previewContainer: {
     flexDirection: 'row',
@@ -199,6 +213,20 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
     marginBottom: Spacing.xs,
   },
+  imageDownloadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 8,
+    marginTop: Spacing.xs,
+    gap: Spacing.xs,
+  },
+  imageDownloadText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   audioPlayer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -232,6 +260,11 @@ export const useStyles = () => {
         textShadowRadius: 4,
       }),
       newChatButton: (): ViewStyle => ({
+        backgroundColor: isDark
+          ? 'rgba(255, 255, 255, 0.1)'
+          : 'rgba(0, 0, 0, 0.05)',
+      }),
+      headerButton: (): ViewStyle => ({
         backgroundColor: isDark
           ? 'rgba(255, 255, 255, 0.1)'
           : 'rgba(0, 0, 0, 0.05)',
@@ -345,6 +378,18 @@ export const useStyles = () => {
       }),
       audioPlayerText: (): TextStyle => ({
         color: isDark ? '#1A1A1A' : '#1A1A1A',
+        fontFamily: Typography.fontFamily.regular,
+      }),
+      imageDownloadButton: (isPremium: boolean): ViewStyle => ({
+        backgroundColor: isPremium
+          ? `${colors.primary}15`
+          : `${colors.textSecondary}10`,
+        borderWidth: 1,
+        borderColor: isPremium ? colors.primary : colors.textSecondary,
+        opacity: isPremium ? 1 : 0.6,
+      }),
+      imageDownloadText: (isPremium: boolean): TextStyle => ({
+        color: isPremium ? colors.primary : colors.textSecondary,
         fontFamily: Typography.fontFamily.regular,
       }),
       previewCloseButton: (): ViewStyle => ({

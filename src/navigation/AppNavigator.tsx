@@ -4,7 +4,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
+import { StudyPlanNavigator } from './StudyPlanNavigator';
 import { PremiumScreen } from '@screens/Premium';
+import { ChatHistoryScreen } from '@screens/Chat';
 import { CreateFlashcardScreen } from '@screens/Flashcards/CreateFlashcardScreen';
 import { useAuthStore } from '@store/authStore';
 import type { RootStackParamList } from './types';
@@ -65,12 +67,24 @@ export const AppNavigator: React.FC = () => {
           <>
             <Stack.Screen name="Main" component={MainNavigator} />
             <Stack.Screen
+              name="StudyPlanStack"
+              component={StudyPlanNavigator}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="Premium"
               component={PremiumScreen}
               options={{
                 presentation: 'modal',
                 gestureEnabled: true,
                 gestureDirection: 'vertical',
+              }}
+            />
+            <Stack.Screen
+              name="ChatHistory"
+              component={ChatHistoryScreen}
+              options={{
+                headerShown: false,
               }}
             />
             <Stack.Screen

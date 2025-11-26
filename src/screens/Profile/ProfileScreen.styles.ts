@@ -131,10 +131,45 @@ export const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: '#FFFFFF',
   },
+  dangerZone: {
+    marginTop: Spacing.xl,
+    padding: Spacing.lg,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  dangerZoneTitle: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: '600',
+    marginBottom: Spacing.md,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  deleteButtonText: {
+    color: '#EF4444',
+    fontSize: Typography.fontSize.base,
+    fontWeight: '600',
+    fontFamily: Typography.fontFamily.regular,
+  },
+  deleteWarning: {
+    fontSize: Typography.fontSize.xs,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+    lineHeight: 18,
+  },
   versionText: {
     fontSize: 12,
     textAlign: 'center',
-    marginTop: Spacing.md,
+    marginTop: Spacing.xl,
     marginBottom: Spacing.xl,
   },
 });
@@ -216,6 +251,24 @@ export const useStyles = () => {
       // Version text
       versionText: (): TextStyle => ({
         color: isDark ? 'rgba(255, 255, 255, 0.5)' : colors.textTertiary,
+        fontFamily: Typography.fontFamily.regular,
+      }),
+
+      // Danger Zone
+      dangerZone: (): ViewStyle => ({
+        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+        borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.2)',
+      }),
+      dangerZoneTitle: (): TextStyle => ({
+        color: '#EF4444',
+        fontFamily: Typography.fontFamily.regular,
+      }),
+      deleteButton: (): ViewStyle => ({
+        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
+        borderColor: '#EF4444',
+      }),
+      deleteWarning: (): TextStyle => ({
+        color: isDark ? 'rgba(255, 255, 255, 0.6)' : colors.textSecondary,
         fontFamily: Typography.fontFamily.regular,
       }),
 

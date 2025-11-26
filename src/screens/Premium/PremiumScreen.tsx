@@ -23,11 +23,26 @@ export const PremiumScreen: React.FC = () => {
     },
     {
       id: '2',
+      title: 'AI Image Generation',
+      description: 'Generate visual diagrams and educational illustrations',
+    },
+    {
+      id: '3',
+      title: 'Download Images',
+      description: 'Save AI-generated images to your device',
+    },
+    {
+      id: '4',
+      title: 'Voice Recording',
+      description: 'Record audio questions and get AI responses',
+    },
+    {
+      id: '5',
       title: 'Full Practice Question Bank',
       description: 'Access to 5,000+ NCLEX-style practice questions',
     },
     {
-      id: '3',
+      id: '6',
       title: 'Custom Study Plans',
       description: 'Personalized study schedules based on your goals',
     },

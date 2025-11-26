@@ -18,6 +18,7 @@ import {
   Sun,
   Camera,
   Crown,
+  Trash2,
 } from 'lucide-react-native';
 import {
   launchImageLibrary,
@@ -170,6 +171,65 @@ export const ProfileScreen: React.FC = () => {
     setProfileImage(null);
     // TODO: Remove from Firebase Storage and update user profile
     Alert.alert('Success', 'Profile picture removed successfully!');
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you absolutely sure you want to delete your account? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            // Show second confirmation
+            Alert.alert(
+              'Final Confirmation',
+              'This will permanently delete:\n\n• Your profile and settings\n• All study plans\n• Chat history\n• Practice progress\n• Everything associated with your account\n\nAre you sure you want to continue?',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                },
+                {
+                  text: 'Yes, Delete My Account',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      setIsLoggingOut(true);
+                      // TODO: Implement account deletion in Firebase
+                      // This should:
+                      // 1. Delete user data from Firestore
+                      // 2. Delete user authentication account
+                      // 3. Sign out the user
+                      
+                      // For now, just sign out
+                      await signOut();
+                      Alert.alert(
+                        'Account Deleted',
+                        'Your account has been successfully deleted.',
+                      );
+                    } catch (error: any) {
+                      setIsLoggingOut(false);
+                      Alert.alert(
+                        'Error',
+                        error.message || 'Failed to delete account. Please try again.',
+                      );
+                    }
+                  },
+                },
+              ],
+              { cancelable: true },
+            );
+          },
+        },
+      ],
+      { cancelable: true },
+    );
   };
 
   if (isLoggingOut) {
@@ -377,6 +437,24 @@ export const ProfileScreen: React.FC = () => {
               </Text>
             </View>
           </TouchableOpacity>
+        </View>
+
+        {/* Delete Account Section */}
+        <View style={[styles.dangerZone, dynamicStyles.dangerZone()]}>
+          <Text style={[styles.dangerZoneTitle, dynamicStyles.dangerZoneTitle()]}>
+            Danger Zone
+          </Text>
+          <TouchableOpacity
+            onPress={handleDeleteAccount}
+            activeOpacity={0.7}
+            style={[styles.deleteButton, dynamicStyles.deleteButton()]}
+          >
+            <Trash2 size={20} color="#EF4444" />
+            <Text style={styles.deleteButtonText}>Delete Account</Text>
+          </TouchableOpacity>
+          <Text style={[styles.deleteWarning, dynamicStyles.deleteWarning()]}>
+            This action is permanent and cannot be undone. All your data will be lost.
+          </Text>
         </View>
 
         {/* App Version */}

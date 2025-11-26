@@ -17,13 +17,13 @@ initializeStripe();
 function App() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const initializeAuth = useAuthStore(state => state.initializeAuth);
 
   useEffect(() => {
     // Initialize Firebase Auth state listener
     // This will automatically restore user session on app restart
     const unsubscribe = initializeAuth();
-    
+
     return () => {
       unsubscribe();
     };
@@ -33,7 +33,7 @@ function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar
-          barStyle={isDark ? 'light-content' : 'dark-content'}
+          barStyle={'light-content'}
           backgroundColor="transparent"
           translucent
         />

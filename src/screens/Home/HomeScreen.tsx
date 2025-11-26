@@ -1,6 +1,13 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import {
   MessageCircle,
   FileText,
@@ -13,6 +20,7 @@ import {
 } from 'lucide-react-native';
 import { GradientBackground } from '@components/common';
 import { useTheme } from '@hooks/useTheme';
+import { useHomeData } from '@hooks/useHomeData';
 import { useAuthStore } from '@store';
 import { styles, useStyles } from './HomeScreen.styles';
 
@@ -21,6 +29,26 @@ export const HomeScreen: React.FC = () => {
   const { colors, isDark } = useTheme();
   const dynamicStyles = useStyles();
   const { user } = useAuthStore();
+  const {
+    activities,
+    loading: activityLoading,
+    error: activityError,
+    refresh,
+  } = useHomeData();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Auto-refresh when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }, [refresh]);
 
   // Get user initials from name
   const getUserInitials = (name?: string | null): string => {
@@ -34,10 +62,15 @@ export const HomeScreen: React.FC = () => {
 
   const isPremium = user?.subscriptionStatus === 'premium';
 
+  const hasChatHistory = activities.some(activity => activity.kind === 'chat');
+  const hasStudyPlan = activities.some(
+    activity => activity.kind === 'studyPlan',
+  );
+
   const mainFeatures = [
     {
       id: 'ai-chat',
-      title: 'Start AI Chat',
+      title: hasChatHistory ? 'Resume AI Chat' : 'Start AI Chat',
       icon: MessageCircle,
       onPress: () => navigation.navigate('Chat' as never),
     },
@@ -49,25 +82,45 @@ export const HomeScreen: React.FC = () => {
     },
     {
       id: isDark ? 'study-plan' : 'flashcards',
-      title: isDark ? 'Study Plan' : 'Flashcards',
+      title: isDark
+        ? hasStudyPlan
+          ? 'Continue Study Plan'
+          : 'Start Study Plan'
+        : 'Flashcards',
       icon: isDark ? Calendar : BookOpen,
-      onPress: () =>
-        navigation.navigate((isDark ? 'StudyPlan' : 'Flashcards') as never),
+      onPress: () => {
+        if (isDark) {
+          // If user has an active study plan, show history to select; otherwise create new
+          if (hasStudyPlan) {
+            (navigation as any).navigate('StudyPlanStack', {
+              screen: 'StudyPlanHistory',
+            });
+          } else {
+            (navigation as any).navigate('StudyPlanStack', {
+              screen: 'StudyPlanGenerator',
+            });
+          }
+        } else {
+          navigation.navigate('Flashcards' as never);
+        }
+      },
     },
   ];
 
-  const recentActivities = [
-    {
-      id: '1',
-      text: 'Answered 5 NCLEX Questions today',
-      icon: BookIcon,
-    },
-    {
-      id: '2',
-      text: 'AI Chat Session about Cardiac',
-      icon: Bot,
-    },
-  ];
+  const getActivityIcon = (kind: string) => {
+    switch (kind) {
+      case 'chat':
+        return Bot;
+      case 'qa':
+        return FileText;
+      case 'flashcards':
+        return BookIcon;
+      case 'studyPlan':
+        return Calendar;
+      default:
+        return BookIcon;
+    }
+  };
 
   return (
     <GradientBackground>
@@ -75,6 +128,14 @@ export const HomeScreen: React.FC = () => {
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
       >
         {/* Header */}
         <View style={styles.header}>
@@ -167,36 +228,81 @@ export const HomeScreen: React.FC = () => {
           >
             Recent Activity
           </Text>
-          {recentActivities.map((activity, index) => {
-            const IconComponent = activity.icon;
-            const isLast = index === recentActivities.length - 1;
-            return (
-              <View
-                key={activity.id}
+          {activityLoading ? (
+            <View style={{ alignItems: 'center', paddingVertical: 4 }}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text
                 style={[
-                  styles.activityItem,
-                  isLast && dynamicStyles.activityItemLast(),
+                  styles.activityText,
+                  dynamicStyles.activityText(),
+                  { marginTop: 8 },
                 ]}
               >
+                Loading recent activity...
+              </Text>
+            </View>
+          ) : activityError ? (
+            <View>
+              <Text
+                style={[
+                  styles.activityText,
+                  dynamicStyles.activityText(),
+                  { marginBottom: 4 },
+                ]}
+              >
+                Unable to load recent activity.
+              </Text>
+              <Text style={[styles.activityText, dynamicStyles.activityText()]}>
+                Please try again later.
+              </Text>
+            </View>
+          ) : activities.length === 0 ? (
+            <View>
+              <Text
+                style={[
+                  styles.activityText,
+                  dynamicStyles.activityText(),
+                  { marginBottom: 4 },
+                ]}
+              >
+                No recent activity yet.
+              </Text>
+              <Text style={[styles.activityText, dynamicStyles.activityText()]}>
+                Start a chat or ask a question to see it here.
+              </Text>
+            </View>
+          ) : (
+            activities.map((activity, index) => {
+              const IconComponent = getActivityIcon(activity.kind);
+              const isLast = index === activities.length - 1;
+              return (
                 <View
+                  key={activity.id}
                   style={[
-                    styles.activityIconContainer,
-                    dynamicStyles.activityIconContainer(),
+                    styles.activityItem,
+                    isLast && dynamicStyles.activityItemLast(),
                   ]}
                 >
-                  <IconComponent
-                    size={20}
-                    color={dynamicStyles.activityIcon().color}
-                  />
+                  <View
+                    style={[
+                      styles.activityIconContainer,
+                      dynamicStyles.activityIconContainer(),
+                    ]}
+                  >
+                    <IconComponent
+                      size={20}
+                      color={dynamicStyles.activityIcon().color}
+                    />
+                  </View>
+                  <Text
+                    style={[styles.activityText, dynamicStyles.activityText()]}
+                  >
+                    {activity.text}
+                  </Text>
                 </View>
-                <Text
-                  style={[styles.activityText, dynamicStyles.activityText()]}
-                >
-                  {activity.text}
-                </Text>
-              </View>
-            );
-          })}
+              );
+            })
+          )}
         </View>
       </ScrollView>
     </GradientBackground>

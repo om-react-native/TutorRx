@@ -21,6 +21,8 @@ import {
 import { AudioRecorder, AudioUtils } from 'react-native-audio';
 // @ts-ignore - react-native-sound doesn't have TypeScript definitions
 import Sound from 'react-native-sound';
+import { CameraRoll } from '@react-native-camera-roll/camera-roll';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Plus,
   ArrowUp,
@@ -29,6 +31,8 @@ import {
   X,
   Play,
   Pause,
+  Download,
+  Clock,
 } from 'lucide-react-native';
 import { GradientBackground } from '@components/common';
 import { firestoreService } from '@services/firebase';
@@ -37,6 +41,7 @@ import firestore, {
 } from '@react-native-firebase/firestore';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@store';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import {
   buildChatMessages,
   generateImage,
@@ -47,10 +52,14 @@ import { styles, useStyles } from './ChatScreen.styles';
 import type { ChatMessage } from '../../types/chat';
 
 export const ChatScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const route = useRoute<any>();
+  const paramChatId = route.params?.chatId;
   const { colors, isDark } = useTheme();
   const dynamicStyles = useStyles();
   const scrollViewRef = useRef<ScrollView>(null);
   const { user } = useAuthStore();
+  const insets = useSafeAreaInsets();
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -73,8 +82,11 @@ export const ChatScreen: React.FC = () => {
       }
 
       try {
-        // Create a new chat if we don't have one yet
-        if (!chatId) {
+        // Use paramChatId if provided from navigation (history selection)
+        if (paramChatId && !chatId) {
+          setChatId(paramChatId);
+        } else if (!chatId && !paramChatId) {
+          // Create a new chat only if no chatId exists and no param provided
           const newChatId = await firestoreService.createChat(user.uid, {
             title: 'NCLEX Study Session',
             lastMessage: '',
@@ -88,8 +100,7 @@ export const ChatScreen: React.FC = () => {
     };
 
     initChat();
-    // we intentionally only depend on user and chatId
-  }, [user, chatId]);
+  }, [user, chatId, paramChatId]);
 
   // Subscribe to latest messages for this chat
   useEffect(() => {
@@ -213,6 +224,18 @@ export const ChatScreen: React.FC = () => {
       minute: '2-digit',
       hour12: true,
     });
+  };
+
+  const handleNewChat = () => {
+    setChatId(null);
+    setMessages([]);
+    // Clear navigation params by navigating to Chat without params
+    navigation.setParams({ chatId: undefined } as never);
+    // This will trigger the useEffect to create a new chat
+  };
+
+  const handleOpenHistory = () => {
+    navigation.navigate('ChatHistory' as never);
   };
 
   const isPremium = user?.subscriptionStatus === 'premium';
@@ -396,28 +419,67 @@ export const ChatScreen: React.FC = () => {
 
       // If the user asked for an image, generate one and send as a separate message
       if (wantsImageAnswer) {
-        try {
-          const imagePrompt = `Create a clear, educational diagram to help a nursing student understand: ${newMessage.content}`;
-          const imageUrl = await generateImage(imagePrompt);
+        // Check if user is premium before generating image
+        if (!isPremium) {
+          const premiumMessage: ChatMessage = {
+            id: `${Date.now().toString()}-premium-prompt`,
+            role: 'assistant',
+            content:
+              '🔒 AI image generation is a premium feature. Upgrade to TutorRx Premium to unlock visual diagrams, flowcharts, and educational illustrations!',
+            timestamp: new Date(),
+            messageType: 'text',
+          };
 
-          if (imageUrl) {
-            const imageMessage: ChatMessage = {
-              id: `${Date.now().toString()}-assistant-image`,
-              role: 'assistant',
-              content: 'Here is a diagram to help visualize this concept.',
-              timestamp: new Date(),
-              imageUri: imageUrl,
-              messageType: 'image_answer',
-            };
+          setMessages(prev => [...prev, premiumMessage]);
 
-            setMessages(prev => [...prev, imageMessage]);
+          // Optionally save this message to Firestore
+          sendMessageToFirestore(premiumMessage).catch(error => {
+            console.error('Failed to save premium prompt message:', error);
+          });
 
-            sendMessageToFirestore(imageMessage).catch(error => {
-              console.error('Failed to save assistant image message:', error);
-            });
+          // Show upgrade dialog
+          setTimeout(() => {
+            Alert.alert(
+              'Premium Feature',
+              'AI-generated images and diagrams are available for premium members only.',
+              [
+                { text: 'Maybe Later', style: 'cancel' },
+                {
+                  text: 'Upgrade to Premium',
+                  onPress: () => navigation.navigate('Premium' as never),
+                },
+              ],
+            );
+          }, 500);
+        } else {
+          // User is premium, proceed with image generation
+          try {
+            const imagePrompt = `Create a clear, educational diagram to help a nursing student understand: ${newMessage.content}`;
+            const imageUrl = await generateImage(imagePrompt);
+
+            if (imageUrl) {
+              const imageMessage: ChatMessage = {
+                id: `${Date.now().toString()}-assistant-image`,
+                role: 'assistant',
+                content: 'Here is a diagram to help visualize this concept.',
+                timestamp: new Date(),
+                imageUri: imageUrl,
+                messageType: 'image_answer',
+              };
+
+              setMessages(prev => [...prev, imageMessage]);
+
+              sendMessageToFirestore(imageMessage).catch(error => {
+                console.error('Failed to save assistant image message:', error);
+              });
+            }
+          } catch (error) {
+            console.error('Failed to generate image:', error);
+            Alert.alert(
+              'Generation Failed',
+              'Could not generate the image. Please try again.',
+            );
           }
-        } catch (error) {
-          console.error('Failed to generate image:', error);
         }
       }
     } catch (error: any) {
@@ -505,6 +567,58 @@ export const ChatScreen: React.FC = () => {
       );
       setIsPlayingAudio(null);
       setAudioPlayer(null);
+    }
+  };
+
+  const handleDownloadImage = async (imageUri: string) => {
+    // Check premium status first
+    if (!isPremium) {
+      Alert.alert(
+        'Premium Feature',
+        'Image download is available for premium members only. Upgrade to unlock this feature!',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Upgrade to Premium',
+            onPress: () => navigation.navigate('Premium' as never),
+          },
+        ],
+      );
+      return;
+    }
+
+    try {
+      // Request permission on Android
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission',
+            message: 'TutorRx needs permission to save images to your device',
+            buttonPositive: 'OK',
+          },
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert(
+            'Permission Denied',
+            'Cannot save image without storage permission',
+          );
+          return;
+        }
+      }
+
+      // Save image to camera roll
+      await CameraRoll.save(imageUri, { type: 'photo' });
+
+      Alert.alert('Success', 'Image has been saved to your photo gallery!', [
+        { text: 'OK' },
+      ]);
+    } catch (error) {
+      console.error('Failed to download image:', error);
+      Alert.alert(
+        'Download Failed',
+        'Could not save image to your device. Please try again.',
+      );
     }
   };
 
@@ -748,117 +862,20 @@ export const ChatScreen: React.FC = () => {
               </Text>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={() => {
-              // Start a new chat session
-              if (!user?.uid) {
-                return;
-              }
-
-              firestoreService
-                .createChat(user.uid, {
-                  title: 'New NCLEX Session',
-                  lastMessage: '',
-                  updatedAt: firestore.FieldValue.serverTimestamp(),
-                })
-                .then(newId => {
-                  setChatId(newId);
-                  setMessages([]);
-                })
-                .catch(error => {
-                  console.error('Failed to create new chat:', error);
-                  Alert.alert(
-                    'Error',
-                    'Could not start a new chat. Please try again.',
-                  );
-                });
-            }}
-            onLongPress={() => {
-              if (!user?.uid || !chatId) {
-                return;
-              }
-
-              Alert.alert(
-                'Chat options',
-                'Manage this conversation',
-                [
-                  {
-                    text: 'Rename conversation',
-                    onPress: async () => {
-                      // Simple rename using prompt-like flow
-                      const newTitle = 'NCLEX Chat'; // Placeholder title
-                      try {
-                        await firestore()
-                          .collection('users')
-                          .doc(user.uid)
-                          .collection('chats')
-                          .doc(chatId)
-                          .update({
-                            title: newTitle,
-                            updatedAt: firestore.FieldValue.serverTimestamp(),
-                          });
-                      } catch (error) {
-                        console.error('Failed to rename chat:', error);
-                        Alert.alert(
-                          'Error',
-                          'Could not rename this chat. Please try again.',
-                        );
-                      }
-                    },
-                  },
-                  {
-                    text: 'Delete conversation',
-                    style: 'destructive',
-                    onPress: async () => {
-                      try {
-                        // Delete messages subcollection
-                        const messagesRef = firestore()
-                          .collection('users')
-                          .doc(user.uid)
-                          .collection('chats')
-                          .doc(chatId)
-                          .collection('messages');
-
-                        const snapshot = await messagesRef.get();
-                        const batch = firestore().batch();
-
-                        snapshot.forEach(doc => {
-                          batch.delete(doc.ref);
-                        });
-
-                        await batch.commit();
-
-                        // Delete chat document
-                        await firestore()
-                          .collection('users')
-                          .doc(user.uid)
-                          .collection('chats')
-                          .doc(chatId)
-                          .delete();
-
-                        setChatId(null);
-                        setMessages([]);
-                      } catch (error) {
-                        console.error('Failed to delete chat:', error);
-                        Alert.alert(
-                          'Error',
-                          'Could not delete this chat. Please try again.',
-                        );
-                      }
-                    },
-                  },
-                  {
-                    text: 'Cancel',
-                    style: 'cancel',
-                  },
-                ],
-                { cancelable: true },
-              );
-            }}
-            style={[styles.newChatButton, dynamicStyles.newChatButton()]}
-          >
-            <Plus size={24} color={isDark ? '#FFFFFF' : colors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              onPress={handleOpenHistory}
+              style={[styles.headerButton, dynamicStyles.headerButton()]}
+            >
+              <Clock size={22} color={isDark ? '#FFFFFF' : colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleNewChat}
+              style={[styles.headerButton, dynamicStyles.headerButton()]}
+            >
+              <Plus size={24} color={isDark ? '#FFFFFF' : colors.text} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Title Section */}
@@ -882,6 +899,14 @@ export const ChatScreen: React.FC = () => {
             }
           }}
         >
+          {messages.length === 0 && !isTyping && (
+            <View style={styles.titleSection}>
+              <Text style={[styles.subtitle, dynamicStyles.subtitle()]}>
+                Ask a question about any NCLEX topic to start your conversation.
+              </Text>
+            </View>
+          )}
+
           {messages.map(msg => (
             <View
               key={msg.id}
@@ -914,6 +939,28 @@ export const ChatScreen: React.FC = () => {
                         console.log('Image loaded successfully:', msg.imageUri);
                       }}
                     />
+                    <TouchableOpacity
+                      style={[
+                        styles.imageDownloadButton,
+                        dynamicStyles.imageDownloadButton(isPremium),
+                      ]}
+                      onPress={() => handleDownloadImage(msg.imageUri!)}
+                    >
+                      <Download
+                        size={16}
+                        color={
+                          isPremium ? colors.primary : colors.textSecondary
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.imageDownloadText,
+                          dynamicStyles.imageDownloadText(isPremium),
+                        ]}
+                      >
+                        {isPremium ? 'Download Image' : 'Premium Only'}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 )}
                 {msg.audioUri && (
@@ -1048,7 +1095,13 @@ export const ChatScreen: React.FC = () => {
         )}
 
         {/* Message Input */}
-        <View style={[styles.inputContainer, dynamicStyles.inputContainer()]}>
+        <View
+          style={[
+            styles.inputContainer,
+            dynamicStyles.inputContainer(),
+            { paddingBottom: 8 },
+          ]}
+        >
           <View style={[styles.inputWrapper, dynamicStyles.inputWrapper()]}>
             {/* Left Actions */}
             <View style={styles.leftActions}>
@@ -1122,6 +1175,18 @@ export const ChatScreen: React.FC = () => {
               />
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Safety disclaimer */}
+        <View
+          style={[
+            styles.footerDisclaimer,
+            { paddingBottom: insets.bottom + 80 },
+          ]}
+        >
+          <Text style={[styles.subtitle, dynamicStyles.subtitle()]}>
+            TutorRx can make mistakes. Always verify critical information.
+          </Text>
         </View>
       </KeyboardAvoidingView>
     </GradientBackground>

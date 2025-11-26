@@ -17,16 +17,29 @@ service cloud.firestore {
       
       // Allow creation on signup
       allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Chats subcollection
+      match /chats/{chatId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        
+        // Messages subcollection
+        match /messages/{messageId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
     }
     
-    // Chat messages
-    match /chats/{chatId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-    }
     
     // Study plans
     match /studyPlans/{planId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Allow read if the plan belongs to the user
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Allow create if the new document has the user's ID
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Allow update/delete if the plan belongs to the user
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // Questions
@@ -47,6 +60,37 @@ service cloud.firestore {
       // Only admins can create, update, or delete flashcards
       allow create, update, delete: if request.auth != null 
                                      && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Q&A Questions - Community questions and answers
+    match /qaQuestions/{questionId} {
+      // All authenticated users can read Q&A questions
+      allow read: if request.auth != null;
+      
+      // All authenticated users can create Q&A questions
+      allow create: if request.auth != null 
+                    && request.resource.data.userId == request.auth.uid;
+      
+      // Users can update their own questions OR system can update answer/category fields
+      allow update: if request.auth != null 
+                    && (request.resource.data.userId == request.auth.uid
+                        || !request.resource.data.diff(resource.data)
+                           .affectedKeys()
+                           .hasAny(['userId', 'userName', 'questionText', 'createdAt']));
+      
+      // Only question owner can delete
+      allow delete: if request.auth != null 
+                    && resource.data.userId == request.auth.uid;
+      
+      // LikedBy subcollection - track who liked each question
+      match /likedBy/{userId} {
+        // Users can read all likes
+        allow read: if request.auth != null;
+        
+        // Users can only create/delete their own likes
+        allow create, delete: if request.auth != null 
+                              && request.auth.uid == userId;
+      }
     }
   }
 }

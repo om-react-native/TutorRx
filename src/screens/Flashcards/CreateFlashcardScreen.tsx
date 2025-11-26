@@ -112,7 +112,7 @@ export const CreateFlashcardScreen: React.FC = () => {
 
     try {
       setIsLoading(true);
-      
+
       if (mode === 'edit' && flashcardId) {
         await firestoreService.updateFlashcard(flashcardId, data);
         Alert.alert('Success', 'Flashcard updated successfully');
@@ -120,7 +120,7 @@ export const CreateFlashcardScreen: React.FC = () => {
         await firestoreService.createFlashcard(user.uid, data);
         Alert.alert('Success', 'Flashcard created successfully');
       }
-      
+
       navigation.goBack();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to save flashcard');
@@ -135,7 +135,12 @@ export const CreateFlashcardScreen: React.FC = () => {
   };
 
   if (isLoading) {
-    return <Loading fullScreen text={mode === 'edit' ? 'Loading flashcard...' : 'Saving flashcard...'} />;
+    return (
+      <Loading
+        fullScreen
+        text={mode === 'edit' ? 'Loading flashcard...' : 'Saving flashcard...'}
+      />
+    );
   }
 
   return (
@@ -166,7 +171,13 @@ export const CreateFlashcardScreen: React.FC = () => {
           {/* Form */}
           <View style={[styles.formContainer, dynamicStyles.formContainer()]}>
             <View style={styles.labelContainer}>
-              <Text style={[styles.sectionTitle, styles.firstSectionTitle, dynamicStyles.sectionTitle()]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  styles.firstSectionTitle,
+                  dynamicStyles.sectionTitle(),
+                ]}
+              >
                 Question
               </Text>
               <Text style={styles.requiredStar}>*</Text>
@@ -239,7 +250,7 @@ export const CreateFlashcardScreen: React.FC = () => {
               name="difficulty"
               render={() => (
                 <View style={styles.difficultyContainer}>
-                  {(['easy', 'medium', 'hard'] as const).map((level) => (
+                  {(['easy', 'medium', 'hard'] as const).map(level => (
                     <TouchableOpacity
                       key={level}
                       activeOpacity={0.7}
@@ -247,7 +258,7 @@ export const CreateFlashcardScreen: React.FC = () => {
                       style={[
                         styles.difficultyButton,
                         dynamicStyles.difficultyButton(
-                          selectedDifficulty === level
+                          selectedDifficulty === level,
                         ),
                       ]}
                     >
@@ -255,7 +266,7 @@ export const CreateFlashcardScreen: React.FC = () => {
                         style={[
                           styles.difficultyText,
                           dynamicStyles.difficultyText(
-                            selectedDifficulty === level
+                            selectedDifficulty === level,
                           ),
                         ]}
                       >

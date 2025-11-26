@@ -1,0 +1,2 @@
+export { QAScreen } from './QAScreen';
+

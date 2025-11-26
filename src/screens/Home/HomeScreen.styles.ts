@@ -10,6 +10,7 @@ export const styles = StyleSheet.create({
   content: {
     padding: Spacing.lg,
     paddingTop: Spacing.xl + 20,
+    paddingBottom: Spacing['4xl'] + 80,
   },
   header: {
     flexDirection: 'row',
