@@ -11,7 +11,6 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import {
   MessageCircle,
   FileText,
-  BookOpen,
   Calendar,
   User,
   BookOpen as BookIcon,
@@ -81,27 +80,19 @@ export const HomeScreen: React.FC = () => {
       onPress: () => navigation.navigate('Questions' as never),
     },
     {
-      id: isDark ? 'study-plan' : 'flashcards',
-      title: isDark
-        ? hasStudyPlan
-          ? 'Continue Study Plan'
-          : 'Start Study Plan'
-        : 'Flashcards',
-      icon: isDark ? Calendar : BookOpen,
+      id: 'study-plan',
+      title: hasStudyPlan ? 'Continue Study Plan' : 'Start Study Plan',
+      icon: Calendar,
       onPress: () => {
-        if (isDark) {
-          // If user has an active study plan, show history to select; otherwise create new
-          if (hasStudyPlan) {
-            (navigation as any).navigate('StudyPlanStack', {
-              screen: 'StudyPlanHistory',
-            });
-          } else {
-            (navigation as any).navigate('StudyPlanStack', {
-              screen: 'StudyPlanGenerator',
-            });
-          }
+        // If user has an active study plan, show history to select; otherwise create new
+        if (hasStudyPlan) {
+          (navigation as any).navigate('StudyPlanStack', {
+            screen: 'StudyPlanHistory',
+          });
         } else {
-          navigation.navigate('Flashcards' as never);
+          (navigation as any).navigate('StudyPlanStack', {
+            screen: 'StudyPlanGenerator',
+          });
         }
       },
     },
