@@ -60,6 +60,7 @@ class FirestoreService {
           ...userData,
           createdAt: firestore.FieldValue.serverTimestamp(),
           subscriptionStatus: userData.subscriptionStatus || 'free',
+          isAdmin: false, // Default to non-admin
           chatHistory: [],
           flashcardProgress: [],
           studyPlanHistory: [],
@@ -288,6 +289,78 @@ class FirestoreService {
       return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     } catch (error: any) {
       throw new Error(error.message || 'Failed to get scenarios');
+    }
+  }
+
+  // Flashcard operations
+  async createFlashcard(uid: string, flashcardData: any): Promise<string> {
+    try {
+      const flashcardRef = await this.db
+        .collection('flashcards')
+        .add({
+          ...flashcardData,
+          createdBy: uid,
+          isActive: true,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
+      return flashcardRef.id;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to create flashcard');
+    }
+  }
+
+  async updateFlashcard(flashcardId: string, flashcardData: any): Promise<void> {
+    try {
+      await this.db
+        .collection('flashcards')
+        .doc(flashcardId)
+        .update({
+          ...flashcardData,
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to update flashcard');
+    }
+  }
+
+  async deleteFlashcard(flashcardId: string): Promise<void> {
+    try {
+      // Soft delete - set isActive to false
+      await this.db
+        .collection('flashcards')
+        .doc(flashcardId)
+        .update({
+          isActive: false,
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to delete flashcard');
+    }
+  }
+
+  async getAllFlashcards(): Promise<any[]> {
+    try {
+      const snapshot = await this.db
+        .collection('flashcards')
+        .where('isActive', '==', true)
+        .orderBy('createdAt', 'desc')
+        .get();
+      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to get flashcards');
+    }
+  }
+
+  async getFlashcardById(flashcardId: string): Promise<any> {
+    try {
+      const doc = await this.db
+        .collection('flashcards')
+        .doc(flashcardId)
+        .get();
+      return doc.exists() ? { id: doc.id, ...doc.data() } : null;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to get flashcard');
     }
   }
 }

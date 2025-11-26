@@ -9,6 +9,7 @@ interface User {
   photoURL?: string | null;
   subscriptionStatus: 'free' | 'premium';
   subscriptionExpiresAt?: string | null;
+  isAdmin?: boolean;
 }
 
 interface AuthState {
@@ -50,6 +51,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             photoURL: firebaseUser.photoURL || null,
             subscriptionStatus: 'free',
             subscriptionExpiresAt: null,
+            isAdmin: false,
           },
           isLoading: false,
           isInitialized: true,
@@ -101,6 +103,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 photoURL: userData.photoURL || firebaseUser.photoURL || null,
                 subscriptionStatus: userData.subscriptionStatus || 'free',
                 subscriptionExpiresAt: userData.subscriptionExpiresAt || null,
+                isAdmin: userData.isAdmin || false,
               },
             }));
           }
@@ -184,6 +187,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           photoURL: userData?.photoURL || userCredential.user.photoURL || null,
           subscriptionStatus: userData?.subscriptionStatus || 'free',
           subscriptionExpiresAt: userData?.subscriptionExpiresAt || null,
+          isAdmin: userData?.isAdmin || false,
         },
         isLoading: false,
       });
@@ -239,6 +243,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           photoURL: userData?.photoURL || null,
           subscriptionStatus: userData?.subscriptionStatus || 'free',
           subscriptionExpiresAt: userData?.subscriptionExpiresAt || null,
+          isAdmin: userData?.isAdmin || false,
         },
         isLoading: false,
       });
@@ -304,6 +309,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           photoURL: userData?.photoURL || userCredential.user.photoURL || null,
           subscriptionStatus: userData?.subscriptionStatus || 'free',
           subscriptionExpiresAt: userData?.subscriptionExpiresAt || null,
+          isAdmin: userData?.isAdmin || false,
         },
         isLoading: false,
       });

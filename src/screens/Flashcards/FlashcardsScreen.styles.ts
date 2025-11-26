@@ -15,6 +15,12 @@ export const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerLabel: {
     fontSize: 12,
@@ -31,6 +37,31 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: Spacing.sm,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
   cardOuterContainer: {
     flex: 1,
     alignItems: 'center',
@@ -46,6 +77,10 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     transform: [{ scale: 0.95 }, { translateY: 8 }],
     opacity: 0.6,
+  },
+  cardTouchable: {
+    flex: 1,
+    borderRadius: 24,
   },
   cardGradient: {
     flex: 1,
@@ -173,6 +208,23 @@ export const useStyles = () => {
         fontWeight: '700',
       }),
       headerSubtitle: (): TextStyle => ({
+        color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+        fontFamily: Typography.fontFamily.regular,
+      }),
+      addButton: (): ViewStyle => ({
+        backgroundColor: isDark
+          ? 'rgba(139, 92, 246, 0.2)'
+          : 'rgba(139, 92, 246, 0.15)',
+        borderWidth: 1,
+        borderColor: isDark
+          ? 'rgba(139, 92, 246, 0.4)'
+          : 'rgba(139, 92, 246, 0.3)',
+      }),
+      emptyText: (): TextStyle => ({
+        color: isDark ? '#FFFFFF' : '#1A1A1A',
+        fontFamily: Typography.fontFamily.regular,
+      }),
+      emptySubtext: (): TextStyle => ({
         color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
         fontFamily: Typography.fontFamily.regular,
       }),

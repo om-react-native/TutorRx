@@ -51,6 +51,7 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   Main: NavigatorScreenParams<MainTabParamList>;
   Premium: undefined;
+  CreateFlashcard: { mode: 'create' | 'edit'; flashcardId?: string };
   ChatStack: NavigatorScreenParams<ChatStackParamList>;
   QuestionsStack: NavigatorScreenParams<QuestionsStackParamList>;
   StudyPlanStack: NavigatorScreenParams<StudyPlanStackParamList>;

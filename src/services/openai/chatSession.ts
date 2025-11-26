@@ -101,14 +101,14 @@ export const streamChatCompletion = async ({
     }),
   });
 
-  if (!response.ok || !response.body) {
+  if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
       `OpenAI streaming error: ${response.status} ${response.statusText} - ${errorText}`,
     );
   }
 
-  const reader = (response.body as any).getReader
+  const reader = (response.body as any)?.getReader
     ? (response.body as any).getReader()
     : null;
 
@@ -127,7 +127,7 @@ export const streamChatCompletion = async ({
       }
     | undefined;
 
-  // eslint-disable-next-line no-constant-condition
+   
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;

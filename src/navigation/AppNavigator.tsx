@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { PremiumScreen } from '@screens/Premium';
+import { CreateFlashcardScreen } from '@screens/Flashcards/CreateFlashcardScreen';
 import { useAuthStore } from '@store/authStore';
 import type { RootStackParamList } from './types';
 import { Loading } from '@components/common';
@@ -70,6 +71,13 @@ export const AppNavigator: React.FC = () => {
                 presentation: 'modal',
                 gestureEnabled: true,
                 gestureDirection: 'vertical',
+              }}
+            />
+            <Stack.Screen
+              name="CreateFlashcard"
+              component={CreateFlashcardScreen}
+              options={{
+                headerShown: false,
               }}
             />
           </>
