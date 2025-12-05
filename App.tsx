@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppNavigator } from '@navigation';
@@ -15,8 +15,6 @@ import { useAuthStore } from '@store/authStore';
 initializeStripe();
 
 function App() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const initializeAuth = useAuthStore(state => state.initializeAuth);
 
   useEffect(() => {

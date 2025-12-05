@@ -42,9 +42,14 @@ const useTabBarStyles = () => {
   return useMemo(
     () => ({
       tabBar: {
-        backgroundColor: isDark
-          ? 'rgba(26, 31, 46, 0.3)'
-          : 'rgba(255, 255, 255, 0.15)',
+        backgroundColor:
+          Platform.OS === 'android'
+            ? isDark
+              ? 'rgba(26, 31, 46, 0.95)'
+              : 'rgba(255, 255, 255, 0.95)'
+            : isDark
+            ? 'rgba(26, 31, 46, 0.3)'
+            : 'rgba(255, 255, 255, 0.15)',
         borderColor: isDark
           ? 'rgba(255, 255, 255, 0.15)'
           : 'rgba(255, 255, 255, 0.5)',
@@ -69,72 +74,78 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({
   const { colors, isDark } = useTheme();
   const dynamicStyles = useTabBarStyles();
 
+  const TabBarContent = (
+    <View style={[styles.tabBar, dynamicStyles.tabBar]}>
+      {state.routes.map((route, index) => {
+        const { options } = descriptors[route.key];
+        const label =
+          labelMap[route.name as keyof typeof labelMap] || route.name;
+        const isFocused = state.index === index;
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name, route.params);
+          }
+        };
+
+        const onLongPress = () => {
+          navigation.emit({
+            type: 'tabLongPress',
+            target: route.key,
+          });
+        };
+
+        const IconComponent = iconMap[route.name as keyof typeof iconMap];
+        const shouldFill = isFocused && route.name === 'Home';
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={isFocused ? { selected: true } : {}}
+            accessibilityLabel={options.tabBarAccessibilityLabel}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            style={styles.tabItem}
+            activeOpacity={0.7}
+          >
+            {IconComponent && (
+              <IconComponent
+                size={24}
+                color={dynamicStyles.iconColor(isFocused).color}
+                fill={shouldFill ? colors.primary : 'transparent'}
+                strokeWidth={isFocused ? 2.5 : 2}
+              />
+            )}
+            <Text style={[styles.tabLabel, dynamicStyles.tabLabel(isFocused)]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <BlurView
-        style={styles.blurView}
-        blurType={isDark ? 'dark' : 'light'}
-        blurAmount={20}
-        reducedTransparencyFallbackColor="transparent"
-      >
-        <View style={[styles.tabBar, dynamicStyles.tabBar]}>
-          {state.routes.map((route, index) => {
-            const { options } = descriptors[route.key];
-            const label =
-              labelMap[route.name as keyof typeof labelMap] || route.name;
-            const isFocused = state.index === index;
-
-            const onPress = () => {
-              const event = navigation.emit({
-                type: 'tabPress',
-                target: route.key,
-                canPreventDefault: true,
-              });
-
-              if (!isFocused && !event.defaultPrevented) {
-                navigation.navigate(route.name, route.params);
-              }
-            };
-
-            const onLongPress = () => {
-              navigation.emit({
-                type: 'tabLongPress',
-                target: route.key,
-              });
-            };
-
-            const IconComponent = iconMap[route.name as keyof typeof iconMap];
-            const shouldFill = isFocused && route.name === 'Home';
-
-            return (
-              <TouchableOpacity
-                key={route.key}
-                accessibilityRole="button"
-                accessibilityState={isFocused ? { selected: true } : {}}
-                accessibilityLabel={options.tabBarAccessibilityLabel}
-                onPress={onPress}
-                onLongPress={onLongPress}
-                style={styles.tabItem}
-                activeOpacity={0.7}
-              >
-                {IconComponent && (
-                  <IconComponent
-                    size={24}
-                    color={dynamicStyles.iconColor(isFocused).color}
-                    fill={shouldFill ? colors.primary : 'transparent'}
-                    strokeWidth={isFocused ? 2.5 : 2}
-                  />
-                )}
-                <Text
-                  style={[styles.tabLabel, dynamicStyles.tabLabel(isFocused)]}
-                >
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </BlurView>
+      {Platform.OS === 'ios' ? (
+        <BlurView
+          style={styles.blurView}
+          blurType={isDark ? 'dark' : 'light'}
+          blurAmount={20}
+          reducedTransparencyFallbackColor="transparent"
+        >
+          {TabBarContent}
+        </BlurView>
+      ) : (
+        <View style={styles.blurView}>{TabBarContent}</View>
+      )}
     </View>
   );
 };
@@ -147,12 +158,12 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 16,
+    paddingHorizontal: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
+    paddingTop: Spacing.sm,
   },
   blurView: {
-    borderRadius: 28,
+    borderRadius: Platform.OS === 'ios' ? 28 : 24,
     overflow: 'hidden',
     width: '100%',
     maxWidth: 600,
@@ -164,17 +175,17 @@ const styles = StyleSheet.create({
         shadowRadius: 16,
       },
       android: {
-        elevation: 10,
+        elevation: 8,
       },
     }),
   },
   tabBar: {
     flexDirection: 'row',
-    height: 72,
-    borderRadius: 28,
+    height: Platform.OS === 'ios' ? 72 : 68,
+    borderRadius: Platform.OS === 'ios' ? 28 : 24,
     borderWidth: 1,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Platform.OS === 'ios' ? Spacing.sm : Spacing.xs,
+    paddingVertical: Spacing.xs,
     alignItems: 'center',
     justifyContent: 'space-around',
   },
@@ -183,11 +194,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.xs,
-    minHeight: 60,
+    paddingHorizontal: 2,
+    minHeight: Platform.OS === 'ios' ? 60 : 56,
   },
   tabLabel: {
-    fontSize: Typography.fontSize.xs,
-    marginTop: 6,
+    fontSize: Platform.OS === 'ios' ? Typography.fontSize.xs : 10,
+    marginTop: 4,
     fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    textAlign: 'center',
   },
 });

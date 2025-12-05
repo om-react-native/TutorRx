@@ -1,4 +1,4 @@
-package com.tutorrx
+package com.tutorrx.nclextutor
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

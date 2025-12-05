@@ -25,7 +25,7 @@ import { styles, useStyles } from './HomeScreen.styles';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const dynamicStyles = useStyles();
   const { user } = useAuthStore();
   const {

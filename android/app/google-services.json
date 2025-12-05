@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "600058406732",
+    "project_id": "tutorrx-36144",
+    "storage_bucket": "tutorrx-36144.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:600058406732:android:99f53913c20a63915391e9",
+        "android_client_info": {
+          "package_name": "com.tutorrx.nclextutor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "600058406732-sv6t2f7n4s4j7da0f33aev8i6plbpvs6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDBK9FiswLGapZEkAyUWlNGU8zcxFa33Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "600058406732-sv6t2f7n4s4j7da0f33aev8i6plbpvs6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "600058406732-v3va8ikb7lgdqr3b8sipjej8l1hog56e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.tutorrx.nclextutor"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

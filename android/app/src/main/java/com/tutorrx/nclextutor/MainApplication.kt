@@ -1,4 +1,4 @@
-package com.tutorrx
+package com.tutorrx.nclextutor
 
 import android.app.Application
 import com.facebook.react.PackageList
