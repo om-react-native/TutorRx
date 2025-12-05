@@ -4,11 +4,11 @@
 //
 // For local development you can temporarily paste your key here,
 // but make sure this file is NOT committed with a real secret.
-export const OPENAI_API_KEY = process.env.OPENAI_API_KEY || ''; // TODO: set via env or build config
+export const OPENAI_API_KEY = '' ; // TODO: set via env or build config
 
 // Default models used across the app
 export const OPENAI_CHAT_MODEL = 'gpt-4o-mini';
-export const OPENAI_IMAGE_MODEL = 'gpt-image-1';
+export const OPENAI_IMAGE_MODEL = 'dall-e-3';
 export const OPENAI_TRANSCRIPTION_MODEL = 'whisper-1';
 
 // TutorRx NCLEX-safe system prompt
